@@ -1,0 +1,23 @@
+{
+  "text.autoconfig.autobackup.title": "Auto Backup",
+  "text.autoconfig.autobackup.option.enableBackup": "Enable Backup",
+  "text.autoconfig.autobackup.option.autoBackup": "Auto Backup",
+  "text.autoconfig.autobackup.option.backupInterval": "Backup Interval",
+  "text.autoconfig.autobackup.option.backupCommand": "Backup Command",
+  "text.autoconfig.autobackup.option.backupWhenExit": "Backup when you leave the world",
+  "text.autoconfig.autobackup.option.saveTimeLeft": "Save Time Until Backup",
+  "com.sefodopo.autobackup.backedUp": "Server Backed Up!",
+  "com.sefodopo.autobackup.backupFailed": "Server Backup Failed!",
+  "com.sefodopo.autobackup.scheduled": "Auto Backup Scheduled for %s minutes!",
+  "com.sefodopo.autobackup.canceled": "Auto Backup Canceled",
+  "com.sefodopo.autobackup.command.backupDisabled": "Can't backup, backup is disabled!",
+  "com.sefodopo.autobackup.command.status": "Backup is %s\nAuto Backup is %s\nBackup Interval is %s\nNext Backup in %s minutes\nBackup command: %s",
+  "com.sefodopo.autobackup.command.minutes": "Automatic backups are scheduled to happen every %d minutes.",
+  "com.sefodopo.autobackup.command.enable.failure": "Automatic Backups are already enabled!",
+  "com.sefodopo.autobackup.command.disable.failure": "Automatic Backups are already disabled!",
+  "com.sefodopo.autobackup.command.command": "Current command to run to backup:\n%s",
+  "com.sefodopo.autobackup.command.now.success": "Backup Done",
+  "com.sefodopo.autobackup.command.now.failure": "Backup Failed!",
+  "com.sefodopo.autobackup.command.master.enableFailure": "Master Backup is already enabled!",
+  "com.sefodopo.autobackup.command.master.disableFailure": "Master Backup is already disabled!"
+}

@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "com.sefodopo.autobackup.mixins",
+  "compatibilityLevel": "JAVA_8",
+  "client": [
+    "ConfigMixin",
+    "PauseMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "refmap": "autobackup.refmap.json"
+}

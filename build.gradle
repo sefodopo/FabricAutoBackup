@@ -25,6 +25,7 @@ dependencies {
 	modImplementation "io.github.prospector:modmenu:1.12.2+build.16"
 	modApi "me.shedaniel.cloth:config-2:4.5.6"
 	modApi "me.sargunvohra.mcmods:autoconfig1u:3.2.0-unstable"
+	include "me.shedaniel.cloth:config-2:4.5.6"
 	include "me.sargunvohra.mcmods:autoconfig1u:3.2.0-unstable"
 }
 
@@ -62,25 +63,4 @@ task sourcesJar(type: Jar, dependsOn: classes) {
 
 jar {
 	from "LICENSE"
-}
-
-// configure the maven publication
-publishing {
-	publications {
-		mavenJava(MavenPublication) {
-			// add all the jars that should be included when publishing to maven
-			artifact(remapJar) {
-				builtBy remapJar
-			}
-			artifact(sourcesJar) {
-				builtBy remapSourcesJar
-			}
-		}
-	}
-
-	// select the repositories you want to publish to
-	repositories {
-		// uncomment to publish to the local maven
-		// mavenLocal()
-	}
 }

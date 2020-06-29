@@ -8,8 +8,11 @@
     "Sefodopo"
   ],
   "contact": {
+    "issues": "https://github.com/sefodopo/FabricAutoBackup/issues",
+    "sources": "https://github.com/sefodopo/FabricAutoBackup",
+    "homepage": "https://github.com/sefodopo/FabricAutoBackup"
   },
-  "license": "CC0-1.0",
+  "license": "GPL-3.0",
   "icon": "assets/autobackup/icon.png",
   "environment": "*",
   "entrypoints": {
@@ -29,6 +32,6 @@
     "minecraft": "1.16.x"
   },
   "suggests": {
-    "flamingo": "*"
+    "modmenu": "*"
   }
 }

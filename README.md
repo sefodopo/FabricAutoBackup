@@ -1,5 +1,7 @@
-# FabricAutoBackup
-Just a simple Fabric Mod for minecraft 1.16.1 to enable automatic custom backups both in singleplayer and on servers!
+# Auto Backup
+Just a ~~simple~~ not super simple Fabric Mod for Minecraft 1.16.1 to enable automatic custom backups both in singleplayer and on servers!  
+
+This mod is designed for people who like specific solutions to manage their data. It requires you to specify a CMD (sh is coming for Linux) command to run to perform the backup at automatic times and hopefully safely without corruption; thus you can specify a command that uploads a copy of the world to a server somewhere or many other endless possibilities. Unfortunately if you don't want to specify a CMD command, then this mod probably isn't for you.
 
 Features:
 

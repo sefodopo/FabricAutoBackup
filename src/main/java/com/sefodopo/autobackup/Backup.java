@@ -22,6 +22,7 @@ public class Backup {
     private boolean paused = false;
     private int delay;
     private final Path configTime;
+    private final boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
 
     public Backup(MinecraftServer server) {
         this.server = server;
@@ -80,7 +81,12 @@ public class Backup {
     }
 
     private boolean backupWithoutSave() {
-        ProcessBuilder builder = new ProcessBuilder("cmd.exe", "/c", AutoBackup.getConfig().backupCommand);
+        ProcessBuilder builder = new ProcessBuilder();
+        if (isWindows) {
+            builder.command("cmd.exe", "/c", AutoBackup.getConfig().backupCommand);
+        } else {
+            builder.command("sh", "-c", AutoBackup.getConfig().backupCommand);
+        }
         builder.environment().put("world", server.getSaveProperties().getLevelName());
         builder.redirectErrorStream(true);
         boolean success = true;

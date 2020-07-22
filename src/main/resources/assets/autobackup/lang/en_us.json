@@ -16,7 +16,7 @@
   "com.sefodopo.autobackup.command.enable.failure": "Automatic Backups are already enabled!",
   "com.sefodopo.autobackup.command.disable.failure": "Automatic Backups are already disabled!",
   "com.sefodopo.autobackup.command.command": "Current command to run to backup:\n%s",
-  "com.sefodopo.autobackup.command.now.success": "Backup Done",
+  "com.sefodopo.autobackup.command.now.success": "Backup Started!",
   "com.sefodopo.autobackup.command.now.failure": "Backup Failed!",
   "com.sefodopo.autobackup.command.master.enableFailure": "Master Backup is already enabled!",
   "com.sefodopo.autobackup.command.master.disableFailure": "Master Backup is already disabled!"

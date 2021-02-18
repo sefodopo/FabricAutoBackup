@@ -3,6 +3,7 @@ package com.sefodopo.autobackup;
 import me.sargunvohra.mcmods.autoconfig1u.AutoConfig;
 import me.sargunvohra.mcmods.autoconfig1u.ConfigData;
 import me.sargunvohra.mcmods.autoconfig1u.annotation.Config;
+import me.sargunvohra.mcmods.autoconfig1u.annotation.ConfigEntry;
 import me.sargunvohra.mcmods.autoconfig1u.serializer.Toml4jConfigSerializer;
 import me.sargunvohra.mcmods.autoconfig1u.shadowed.blue.endless.jankson.Comment;
 import net.fabricmc.api.ModInitializer;
@@ -18,9 +19,7 @@ public class AutoBackup implements ModInitializer {
     @Override
     public void onInitialize() {
         getConfig();
-        CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
-            new BackupCommands(dispatcher, this);
-        });
+        CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> new BackupCommands(dispatcher, this));
         ServerLifecycleEvents.SERVER_STARTED.register((server) -> backup = new Backup(server));
         ServerLifecycleEvents.SERVER_STOPPED.register((server) -> {
             backup.stop();
@@ -56,6 +55,11 @@ public class AutoBackup implements ModInitializer {
         boolean backupWhenExit = false;
         @Comment("Does not apply when Backup When Exit is true")
         boolean saveTimeLeft = true;
+        boolean broadCastBackupMessagesToOps = true;
+        @ConfigEntry.Category("permissions") int statusPermissionLevel = 4;
+        @ConfigEntry.Category("permissions") int permissionLevel = 4;
+        @ConfigEntry.Category("permissions") int backupNowPermissionLevel = 4;
+        @ConfigEntry.Category("permissions") int commandPermissionLevel = 5;
     }
 
 

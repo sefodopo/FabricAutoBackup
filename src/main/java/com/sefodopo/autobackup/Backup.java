@@ -2,10 +2,12 @@ package com.sefodopo.autobackup;
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerTask;
+import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.WorldSavePath;
 import org.apache.commons.lang3.SerializationException;
+import org.apache.logging.log4j.LogManager;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -23,6 +25,7 @@ public class Backup {
     private int delay;
     private final Path configTime;
     private final boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
+    private ServerCommandSource source = null;
 
     public Backup(MinecraftServer server) {
         this.server = server;
@@ -46,8 +49,15 @@ public class Backup {
     public void backup() {
         server.send(new ServerTask(20, () -> {
             if (!AutoBackup.getConfig().enableBackup) {
+                LogManager.getLogger().warn("Backup tried to go when not enabled, something might be wrong.");
                 return;
             }
+            boolean ops = AutoBackup.getConfig().broadCastBackupMessagesToOps;
+
+            // Let everyone know that a backup has started
+            server.getCommandSource().sendFeedback(new TranslatableText("com.sefodopo.autobackup.backupStarted"), ops);
+            LogManager.getLogger().info("Starting Server Backup");
+
             // Save off
             Iterator<ServerWorld> worlds = server.getWorlds().iterator();
             while (worlds.hasNext()) {
@@ -72,10 +82,24 @@ public class Backup {
                     serverWorld.savingDisabled = false;
                 }
             }
-            if (success)
-                server.getCommandSource().sendFeedback(new TranslatableText("com.sefodopo.autobackup.backedUp"), true);
-            else
-                server.getCommandSource().sendFeedback(new TranslatableText("com.sefodopo.autobackup.backupFailed"), true);
+
+            // Send messages to keep everyone informed of the successfulness of the backup
+            if (success) {
+                server.getCommandSource().sendFeedback(new TranslatableText("com.sefodopo.autobackup.backedUp"), ops);
+                LogManager.getLogger().info("Server Just Backed up!");
+                if (this.source != null) {
+                    this.source.sendFeedback(new TranslatableText("com.sefodopo.autobackup.command.now.success"), false);
+                    this.source = null;
+                }
+            }
+            else {
+                server.getCommandSource().sendFeedback(new TranslatableText("com.sefodopo.autobackup.backupFailed"), ops);
+                LogManager.getLogger().warn("Server failed to back up, check the backup command!");
+                if (this.source != null) {
+                    this.source.sendFeedback(new TranslatableText("com.sefodopo.autobackup.command.now.failure"), false);
+                    this.source = null;
+                }
+            }
         }));
 
     }
@@ -92,15 +116,17 @@ public class Backup {
         boolean success = true;
         try {
             Process p = builder.start();
-        } catch (IOException e) {
+            p.waitFor();
+            return p.exitValue() == 0;
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
-            success = false;
+            return false;
         }
-        return success;
     }
 
-    public boolean now() {
+    public boolean now(ServerCommandSource source) {
         unQueBackup();
+        this.source = source;
         server.send(new ServerTask(20, this::backup));
         queBackup();
         return true;

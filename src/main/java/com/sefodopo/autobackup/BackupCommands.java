@@ -15,13 +15,16 @@ public class BackupCommands {
         this.mod = mod;
 
         dispatcher.register(CommandManager.literal("backup")
+                .requires(source -> source.hasPermissionLevel(AutoBackup.getConfig().statusPermissionLevel))
                 .then(status())
-                .then(minutes())
-                .then(enable())
-                .then(disable())
-                .then(command())
-                .then(now())
-                .then(master())
+                .then(command().requires(source -> source.hasPermissionLevel(AutoBackup.getConfig().permissionLevel))
+                    .requires(source -> source.hasPermissionLevel(AutoBackup.getConfig().permissionLevel))
+                    .then(minutes())
+                    .then(enable())
+                    .then(disable())
+                    .then(command())
+                    .then(now())
+                .then(master()))
                 .executes(context -> {
                     sendStatus(context.getSource());
                     return 0;
@@ -33,8 +36,7 @@ public class BackupCommands {
                 AutoBackup.getConfig().enableBackup ? "enabled" : "disabled",
                 AutoBackup.getConfig().autoBackup ? "enabled" : "disabled",
                 AutoBackup.getConfig().backupInterval,
-                mod.getBackup().getMinutesUntilBackup(),
-                AutoBackup.getConfig().backupCommand), false);
+                mod.getBackup().getMinutesUntilBackup()), false);
     }
 
     private LiteralArgumentBuilder<ServerCommandSource> status() {
@@ -90,6 +92,7 @@ public class BackupCommands {
 
     private LiteralArgumentBuilder<ServerCommandSource> command() {
         return CommandManager.literal("command")
+                .requires(source -> source.hasPermissionLevel(AutoBackup.getConfig().commandPermissionLevel))
                 .then(CommandManager.argument("command", StringArgumentType.greedyString())
                         .executes(cxt -> {
                             AutoBackup.getConfig().backupCommand = StringArgumentType.getString(cxt, "command");
@@ -104,9 +107,14 @@ public class BackupCommands {
 
     private LiteralArgumentBuilder<ServerCommandSource> now() {
         return CommandManager.literal("now")
+                .requires(source -> source.hasPermissionLevel(AutoBackup.getConfig().backupNowPermissionLevel))
                 .executes(cxt -> {
-                    if (AutoBackup.getInstance().getBackup().now()) {
-                        cxt.getSource().sendFeedback(new TranslatableText("com.sefodopo.autobackup.command.now.success"), true);
+                    if (!AutoBackup.getConfig().enableBackup) {
+                        cxt.getSource().sendError(new TranslatableText("com.sefodopo.autobackup.command.now.disabled"));
+                        return 1;
+                    }
+                    if (AutoBackup.getInstance().getBackup().now(cxt.getSource())) {
+                        cxt.getSource().sendFeedback(new TranslatableText("com.sefodopo.autobackup.command.now.started"), false);
                         return 0;
                     }
                     cxt.getSource().sendError(new TranslatableText("com.sefodopo.autobackup.command.now.failure"));

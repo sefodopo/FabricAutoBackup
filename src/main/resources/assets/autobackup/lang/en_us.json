@@ -10,7 +10,7 @@
   "text.autoconfig.autobackup.category.permissions": "Permissions",
   "text.autoconfig.autobackup.category.default": "Settings",
   "text.autoconfig.autobackup.option.statusPermissionLevel": "Permission level to be able to use the backup command at all and only allows status",
-  "text.autoconfig.autobackup.option.permissionLevel": "Permission level required for anything besides status",
+  "text.autoconfig.autobackup.option.permissionLevel": "Permission level required for anything that doesn't have it's own permission level",
   "text.autoconfig.autobackup.option.commandPermissionLevel": "Permission level to view and change the command to be run",
   "text.autoconfig.autobackup.option.backupNowPermissionLevel": "Permission level to execute a backup now",
   "com.sefodopo.autobackup.backupStarted": "Backup Started",

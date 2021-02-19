@@ -6,7 +6,6 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.TranslatableText;
 
 public class BackupCommands {
     private final AutoBackup mod;
@@ -30,7 +29,7 @@ public class BackupCommands {
     }
 
     private void sendStatus(ServerCommandSource source) {
-        source.sendFeedback(new TranslatableText("com.sefodopo.autobackup.command.status",
+        source.sendFeedback(AutoBackup.text("com.sefodopo.autobackup.command.status",
                 AutoBackup.getConfig().enableBackup ? "enabled" : "disabled",
                 AutoBackup.getConfig().autoBackup ? "enabled" : "disabled",
                 AutoBackup.getConfig().backupInterval,
@@ -51,12 +50,12 @@ public class BackupCommands {
                 .then(CommandManager.argument("minutes", IntegerArgumentType.integer(0))
                         .executes(cxt -> {
                             AutoBackup.getConfig().backupInterval = IntegerArgumentType.getInteger(cxt, "minutes");
-                            AutoBackup.getInstance().getBackup().checkConfig();
+                            AutoBackup.saveConfig();
                             sendStatus(cxt.getSource());
                             return 0;
                         }))
                 .executes(cxt -> {
-                    cxt.getSource().sendFeedback(new TranslatableText("com.sefodopo.autobackup.command.minutes", AutoBackup.getConfig().backupInterval), false);
+                    cxt.getSource().sendFeedback(AutoBackup.text("com.sefodopo.autobackup.command.minutes", AutoBackup.getConfig().backupInterval), false);
                     return 0;
                 });
     }
@@ -66,11 +65,11 @@ public class BackupCommands {
                 .requires(source -> source.hasPermissionLevel(AutoBackup.getConfig().permissionLevel))
                 .executes(cxt -> {
                     if (AutoBackup.getConfig().autoBackup) {
-                        cxt.getSource().sendError(new TranslatableText("com.sefodopo.autobackup.command.enable.failure"));
+                        cxt.getSource().sendError(AutoBackup.text("com.sefodopo.autobackup.command.enable.failure"));
                         return 1;
                     }
                     AutoBackup.getConfig().autoBackup = true;
-                    AutoBackup.getInstance().getBackup().checkConfig();
+                    AutoBackup.saveConfig();
                     sendStatus(cxt.getSource());
                     return 0;
                 });
@@ -81,11 +80,11 @@ public class BackupCommands {
                 .requires(source -> source.hasPermissionLevel(AutoBackup.getConfig().permissionLevel))
                 .executes(cxt -> {
                     if (!AutoBackup.getConfig().autoBackup) {
-                        cxt.getSource().sendError(new TranslatableText("com.sefodopo.autobackup.command.disable.failure"));
+                        cxt.getSource().sendError(AutoBackup.text("com.sefodopo.autobackup.command.disable.failure"));
                         return 1;
                     }
                     AutoBackup.getConfig().autoBackup = false;
-                    AutoBackup.getInstance().getBackup().checkConfig();
+                    AutoBackup.saveConfig();
                     sendStatus(cxt.getSource());
                     return 0;
                 });
@@ -97,11 +96,12 @@ public class BackupCommands {
                 .then(CommandManager.argument("command", StringArgumentType.greedyString())
                         .executes(cxt -> {
                             AutoBackup.getConfig().backupCommand = StringArgumentType.getString(cxt, "command");
+                            AutoBackup.saveConfig();
                             sendStatus(cxt.getSource());
                             return 0;
                         }))
                 .executes(cxt -> {
-                    cxt.getSource().sendFeedback(new TranslatableText("com.sefodopo.autobackup.command.command", AutoBackup.getConfig().backupCommand), false);
+                    cxt.getSource().sendFeedback(AutoBackup.text("com.sefodopo.autobackup.command.command", AutoBackup.getConfig().backupCommand), false);
                     return 0;
                 });
     }
@@ -111,14 +111,14 @@ public class BackupCommands {
                 .requires(source -> source.hasPermissionLevel(AutoBackup.getConfig().backupNowPermissionLevel))
                 .executes(cxt -> {
                     if (!AutoBackup.getConfig().enableBackup) {
-                        cxt.getSource().sendError(new TranslatableText("com.sefodopo.autobackup.command.now.disabled"));
+                        cxt.getSource().sendError(AutoBackup.text("com.sefodopo.autobackup.command.now.disabled"));
                         return 1;
                     }
                     if (AutoBackup.getInstance().getBackup().now(cxt.getSource())) {
-                        cxt.getSource().sendFeedback(new TranslatableText("com.sefodopo.autobackup.command.now.started"), false);
+                        cxt.getSource().sendFeedback(AutoBackup.text("com.sefodopo.autobackup.command.now.started"), false);
                         return 0;
                     }
-                    cxt.getSource().sendError(new TranslatableText("com.sefodopo.autobackup.command.now.failure"));
+                    cxt.getSource().sendError(AutoBackup.text("com.sefodopo.autobackup.command.now.failure"));
                     return 1;
                 });
     }
@@ -129,22 +129,22 @@ public class BackupCommands {
                 .then(CommandManager.literal("enable")
                         .executes(cxt -> {
                             if (AutoBackup.getConfig().enableBackup) {
-                                cxt.getSource().sendError(new TranslatableText("com.sefodopo.autobackup.command.master.enableFailure"));
+                                cxt.getSource().sendError(AutoBackup.text("com.sefodopo.autobackup.command.master.enableFailure"));
                                 return 1;
                             }
                             AutoBackup.getConfig().enableBackup = true;
-                            AutoBackup.getInstance().getBackup().checkConfig();
+                            AutoBackup.saveConfig();
                             sendStatus(cxt.getSource());
                             return 0;
                         }))
                 .then(CommandManager.literal("disable")
                         .executes(cxt -> {
                             if (!AutoBackup.getConfig().enableBackup) {
-                                cxt.getSource().sendError(new TranslatableText("com.sefodopo.autobackup.command.master.disableFailure"));
+                                cxt.getSource().sendError(AutoBackup.text("com.sefodopo.autobackup.command.master.disableFailure"));
                                 return 1;
                             }
                             AutoBackup.getConfig().enableBackup = false;
-                            AutoBackup.getInstance().getBackup().checkConfig();
+                            AutoBackup.saveConfig();
                             sendStatus(cxt.getSource());
                             return 0;
                         }));

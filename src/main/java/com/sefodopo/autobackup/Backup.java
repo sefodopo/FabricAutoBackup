@@ -4,7 +4,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerTask;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.WorldSavePath;
 import org.apache.commons.lang3.SerializationException;
 import org.apache.logging.log4j.LogManager;
@@ -29,7 +28,7 @@ public class Backup {
     public Backup(MinecraftServer server) {
         this.server = server;
         timer = new Timer(true);
-        delay = AutoBackup.getConfig().backupInterval;
+        delay = getDelayFromConfig();
         paused = true;
         configTime = server.getSavePath(WorldSavePath.ROOT).resolve("autobackup.timeleft");
         try {
@@ -45,12 +44,16 @@ public class Backup {
         }
     }
 
+    private int getDelayFromConfig() {
+        return AutoBackup.getConfig().backupInterval * 60000;
+    }
+
     public void preBackup(Object lock) {
         server.send(new ServerTask(1, () -> {
             boolean ops = AutoBackup.getConfig().broadCastBackupMessagesToOps;
 
             // Let everyone know that a backup has started
-            server.getCommandSource().sendFeedback(new TranslatableText("com.sefodopo.autobackup.backupStarted"), ops);
+            server.getCommandSource().sendFeedback(AutoBackup.text("com.sefodopo.autobackup.backupStarted"), ops);
             LogManager.getLogger().info("Starting Server Backup");
 
             // Save off
@@ -84,16 +87,16 @@ public class Backup {
 
             // Send messages to keep everyone informed of the successfulness of the backup
             if (success) {
-                server.getCommandSource().sendFeedback(new TranslatableText("com.sefodopo.autobackup.backedUp"), ops);
+                server.getCommandSource().sendFeedback(AutoBackup.text("com.sefodopo.autobackup.backedUp"), ops);
                 LogManager.getLogger().info("Server Just Backed up!");
                 if (this.source != null)
-                    this.source.sendFeedback(new TranslatableText("com.sefodopo.autobackup.command.now.success"), false);
+                    this.source.sendFeedback(AutoBackup.text("com.sefodopo.autobackup.command.now.success"), false);
             }
             else {
-                server.getCommandSource().sendFeedback(new TranslatableText("com.sefodopo.autobackup.backupFailed"), ops);
+                server.getCommandSource().sendFeedback(AutoBackup.text("com.sefodopo.autobackup.backupFailed"), ops);
                 LogManager.getLogger().warn("Server failed to back up, check the backup command!");
                 if (this.source != null)
-                    this.source.sendFeedback(new TranslatableText("com.sefodopo.autobackup.command.now.failure"), false);
+                    this.source.sendFeedback(AutoBackup.text("com.sefodopo.autobackup.command.now.failure"), false);
             }
         }));
     }
@@ -132,12 +135,13 @@ public class Backup {
         if (!(AutoBackup.getConfig().enableBackup && AutoBackup.getConfig().autoBackup)) {
             if (this.timeLeft > 0)
                 server.getCommandSource().sendFeedback(
-                        new TranslatableText("com.sefodopo.autobackup.canceled"), true);
+                        AutoBackup.text("com.sefodopo.autobackup.canceled"), true);
             this.timeLeft = -1;
             unQueBackup();
         }
-        if (delay != AutoBackup.getConfig().backupInterval) {
-            delay = AutoBackup.getConfig().backupInterval;
+        if (delay != getDelayFromConfig()) {
+            delay = getDelayFromConfig();
+            timeLeft = -1;
             unQueBackup();
         }
         queBackup();
@@ -174,7 +178,6 @@ public class Backup {
     public void unQueBackup() {
         if (task != null && task.scheduled) {
             task.cancel();
-            this.timeLeft = -1;
         }
     }
 
@@ -206,7 +209,6 @@ public class Backup {
 
         private BackupTask() {
             immediate = null;
-            int delay = AutoBackup.getConfig().backupInterval * 60000;
             if (paused && timeLeft > 0) {
                 timer.scheduleAtFixedRate(this, timeLeft, delay);
                 nextExecutionTime = this.scheduledExecutionTime() + delay;
@@ -215,8 +217,8 @@ public class Backup {
                 timer.scheduleAtFixedRate(this, delay, delay);
                 nextExecutionTime = this.scheduledExecutionTime() + delay;
                 server.getCommandSource().sendFeedback(
-                        new TranslatableText("com.sefodopo.autobackup.scheduled", AutoBackup.getConfig().backupInterval),
-                        true);
+                        AutoBackup.text("com.sefodopo.autobackup.scheduled", AutoBackup.getConfig().backupInterval),
+                        AutoBackup.getConfig().broadCastBackupMessagesToOps);
             }
         }
 
@@ -247,7 +249,7 @@ public class Backup {
                 }
                 postBackup(backup());
             }
-            nextExecutionTime = this.scheduledExecutionTime() + 60000L * AutoBackup.getConfig().backupInterval;
+            nextExecutionTime = this.scheduledExecutionTime() + getDelayFromConfig();
             if (immediate != null) {
                 source = null;
                 this.scheduled = false;

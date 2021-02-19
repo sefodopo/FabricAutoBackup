@@ -29,7 +29,7 @@ public class Backup {
     public Backup(MinecraftServer server) {
         this.server = server;
         timer = new Timer(true);
-        delay = AutoBackup.getConfig().backupInterval;
+        delay = getDelayFromConfig();
         paused = true;
         configTime = server.getSavePath(WorldSavePath.ROOT).resolve("autobackup.timeleft");
         try {
@@ -43,6 +43,10 @@ public class Backup {
         } catch (IOException e) {
             throw new SerializationException(e);
         }
+    }
+
+    private int getDelayFromConfig() {
+        return AutoBackup.getConfig().backupInterval * 60000;
     }
 
     public void preBackup(Object lock) {
@@ -136,8 +140,9 @@ public class Backup {
             this.timeLeft = -1;
             unQueBackup();
         }
-        if (delay != AutoBackup.getConfig().backupInterval) {
-            delay = AutoBackup.getConfig().backupInterval;
+        if (delay != getDelayFromConfig()) {
+            delay = getDelayFromConfig();
+            timeLeft = -1;
             unQueBackup();
         }
         queBackup();
@@ -174,7 +179,6 @@ public class Backup {
     public void unQueBackup() {
         if (task != null && task.scheduled) {
             task.cancel();
-            this.timeLeft = -1;
         }
     }
 
@@ -206,7 +210,6 @@ public class Backup {
 
         private BackupTask() {
             immediate = null;
-            int delay = AutoBackup.getConfig().backupInterval * 60000;
             if (paused && timeLeft > 0) {
                 timer.scheduleAtFixedRate(this, timeLeft, delay);
                 nextExecutionTime = this.scheduledExecutionTime() + delay;
@@ -216,7 +219,7 @@ public class Backup {
                 nextExecutionTime = this.scheduledExecutionTime() + delay;
                 server.getCommandSource().sendFeedback(
                         new TranslatableText("com.sefodopo.autobackup.scheduled", AutoBackup.getConfig().backupInterval),
-                        true);
+                        AutoBackup.getConfig().broadCastBackupMessagesToOps);
             }
         }
 
@@ -247,7 +250,7 @@ public class Backup {
                 }
                 postBackup(backup());
             }
-            nextExecutionTime = this.scheduledExecutionTime() + 60000L * AutoBackup.getConfig().backupInterval;
+            nextExecutionTime = this.scheduledExecutionTime() + getDelayFromConfig();
             if (immediate != null) {
                 source = null;
                 this.scheduled = false;

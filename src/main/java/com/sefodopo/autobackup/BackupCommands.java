@@ -50,7 +50,7 @@ public class BackupCommands {
                 .then(CommandManager.argument("minutes", IntegerArgumentType.integer(0))
                         .executes(cxt -> {
                             AutoBackup.getConfig().backupInterval = IntegerArgumentType.getInteger(cxt, "minutes");
-                            AutoBackup.getInstance().getBackup().checkConfig();
+                            AutoBackup.saveConfig();
                             sendStatus(cxt.getSource());
                             return 0;
                         }))
@@ -69,7 +69,7 @@ public class BackupCommands {
                         return 1;
                     }
                     AutoBackup.getConfig().autoBackup = true;
-                    AutoBackup.getInstance().getBackup().checkConfig();
+                    AutoBackup.saveConfig();
                     sendStatus(cxt.getSource());
                     return 0;
                 });
@@ -84,7 +84,7 @@ public class BackupCommands {
                         return 1;
                     }
                     AutoBackup.getConfig().autoBackup = false;
-                    AutoBackup.getInstance().getBackup().checkConfig();
+                    AutoBackup.saveConfig();
                     sendStatus(cxt.getSource());
                     return 0;
                 });
@@ -96,6 +96,7 @@ public class BackupCommands {
                 .then(CommandManager.argument("command", StringArgumentType.greedyString())
                         .executes(cxt -> {
                             AutoBackup.getConfig().backupCommand = StringArgumentType.getString(cxt, "command");
+                            AutoBackup.saveConfig();
                             sendStatus(cxt.getSource());
                             return 0;
                         }))
@@ -132,7 +133,7 @@ public class BackupCommands {
                                 return 1;
                             }
                             AutoBackup.getConfig().enableBackup = true;
-                            AutoBackup.getInstance().getBackup().checkConfig();
+                            AutoBackup.saveConfig();
                             sendStatus(cxt.getSource());
                             return 0;
                         }))
@@ -143,7 +144,7 @@ public class BackupCommands {
                                 return 1;
                             }
                             AutoBackup.getConfig().enableBackup = false;
-                            AutoBackup.getInstance().getBackup().checkConfig();
+                            AutoBackup.saveConfig();
                             sendStatus(cxt.getSource());
                             return 0;
                         }));

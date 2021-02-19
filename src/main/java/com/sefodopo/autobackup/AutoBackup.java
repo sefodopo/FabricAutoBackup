@@ -2,6 +2,7 @@ package com.sefodopo.autobackup;
 
 import me.sargunvohra.mcmods.autoconfig1u.AutoConfig;
 import me.sargunvohra.mcmods.autoconfig1u.ConfigData;
+import me.sargunvohra.mcmods.autoconfig1u.ConfigManager;
 import me.sargunvohra.mcmods.autoconfig1u.annotation.Config;
 import me.sargunvohra.mcmods.autoconfig1u.annotation.ConfigEntry;
 import me.sargunvohra.mcmods.autoconfig1u.serializer.Toml4jConfigSerializer;
@@ -20,6 +21,7 @@ public class AutoBackup implements ClientModInitializer, DedicatedServerModIniti
     private Backup backup;
     private static AutoBackup mod;
     private static boolean dedicated;
+    private static ConfigManager<ModConfig> configManager;
 
 
     public void onInitialize() {
@@ -45,8 +47,8 @@ public class AutoBackup implements ClientModInitializer, DedicatedServerModIniti
         if (config != null) {
             return config;
         }
-        AutoConfig.register(ModConfig.class, Toml4jConfigSerializer::new);
-        config = AutoConfig.getConfigHolder(ModConfig.class).getConfig();
+        configManager = (ConfigManager<ModConfig>) AutoConfig.register(ModConfig.class, Toml4jConfigSerializer::new);
+        config = configManager.getConfig();
         return config;
     }
 
@@ -78,6 +80,11 @@ public class AutoBackup implements ClientModInitializer, DedicatedServerModIniti
             return  new SSTranslatableText(key, args);
         else
             return new TranslatableText(key, args);
+    }
+
+    public static void saveConfig() {
+        configManager.save();
+        getInstance().backup.checkConfig();
     }
 
     @Config(name = "autobackup")

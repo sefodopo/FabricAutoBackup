@@ -6,21 +6,30 @@ import me.sargunvohra.mcmods.autoconfig1u.annotation.Config;
 import me.sargunvohra.mcmods.autoconfig1u.annotation.ConfigEntry;
 import me.sargunvohra.mcmods.autoconfig1u.serializer.Toml4jConfigSerializer;
 import me.sargunvohra.mcmods.autoconfig1u.shadowed.blue.endless.jankson.Comment;
-import net.fabricmc.api.ModInitializer;
+import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.logandark.languagehack.SSTranslatableText;
+import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableText;
 
-public class AutoBackup implements ModInitializer {
+public class AutoBackup implements ClientModInitializer, DedicatedServerModInitializer {
 
     private static ModConfig config;
     private Backup backup;
     private static AutoBackup mod;
+    private static boolean dedicated;
 
-    @Override
+
     public void onInitialize() {
         getConfig();
         CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> new BackupCommands(dispatcher, this));
-        ServerLifecycleEvents.SERVER_STARTED.register((server) -> backup = new Backup(server));
+        ServerLifecycleEvents.SERVER_STARTED.register((server) -> {
+            backup = new Backup(server);
+            if (dedicated)
+                backup.queBackup();
+        });
         ServerLifecycleEvents.SERVER_STOPPED.register((server) -> {
             backup.stop();
             backup = null;
@@ -43,6 +52,32 @@ public class AutoBackup implements ModInitializer {
 
     public Backup getBackup() {
         return backup;
+    }
+
+    @Override
+    public void onInitializeClient() {
+        dedicated = false;
+        onInitialize();
+    }
+
+    @Override
+    public void onInitializeServer() {
+        dedicated = true;
+        onInitialize();
+    }
+
+    public static Text text(String key) {
+        if(dedicated)
+            return  new SSTranslatableText(key);
+        else
+            return new TranslatableText(key);
+    }
+
+    public static Text text(String key, Object... args) {
+        if (dedicated)
+            return  new SSTranslatableText(key, args);
+        else
+            return new TranslatableText(key, args);
     }
 
     @Config(name = "autobackup")

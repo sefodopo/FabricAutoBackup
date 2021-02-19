@@ -16,7 +16,10 @@
   "icon": "assets/autobackup/icon.png",
   "environment": "*",
   "entrypoints": {
-    "main": [
+    "client": [
+      "com.sefodopo.autobackup.AutoBackup"
+    ],
+    "server": [
       "com.sefodopo.autobackup.AutoBackup"
     ],
     "modmenu": [

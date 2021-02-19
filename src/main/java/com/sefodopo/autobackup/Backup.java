@@ -12,16 +12,15 @@ import org.apache.logging.log4j.LogManager;
 import java.io.*;
 import java.nio.file.Path;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class Backup {
-    private Timer timer;
+    private final Timer timer;
     private final MinecraftServer server;
     private BackupTask task;
-    private long timeLeft = -1;
-    private boolean paused = false;
+    private long timeLeft;
+    private boolean paused;
     private int delay;
     private final Path configTime;
     private final boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
@@ -46,12 +45,8 @@ public class Backup {
         }
     }
 
-    public void backup() {
-        server.send(new ServerTask(20, () -> {
-            if (!AutoBackup.getConfig().enableBackup) {
-                LogManager.getLogger().warn("Backup tried to go when not enabled, something might be wrong.");
-                return;
-            }
+    public void preBackup(Object lock) {
+        server.send(new ServerTask(1, () -> {
             boolean ops = AutoBackup.getConfig().broadCastBackupMessagesToOps;
 
             // Let everyone know that a backup has started
@@ -59,11 +54,9 @@ public class Backup {
             LogManager.getLogger().info("Starting Server Backup");
 
             // Save off
-            Iterator<ServerWorld> worlds = server.getWorlds().iterator();
-            while (worlds.hasNext()) {
-                ServerWorld serverWorld = (ServerWorld) worlds.next();
-                if (serverWorld != null && !serverWorld.savingDisabled) {
-                    serverWorld.savingDisabled = true;
+            for (ServerWorld world : server.getWorlds()) {
+                if (world != null && !world.savingDisabled) {
+                    world.savingDisabled = true;
                 }
             }
 
@@ -71,40 +64,41 @@ public class Backup {
             server.getPlayerManager().saveAllPlayerData();
             server.save(true, true, true);
 
-            // backup!!!!
-            boolean success = backupWithoutSave();
+            // Let the backupTask continue
+            synchronized (lock) {
+                lock.notify();
+            }
+        }));
+    }
 
-            // Save On
-            worlds = server.getWorlds().iterator();
-            while (worlds.hasNext()) {
-                ServerWorld serverWorld = (ServerWorld) worlds.next();
-                if (serverWorld != null && serverWorld.savingDisabled) {
-                    serverWorld.savingDisabled = false;
-                }
+    public void postBackup(boolean success) {
+        // Clean up after the backup
+        server.send(new ServerTask(1, () -> {
+            boolean ops = AutoBackup.getConfig().broadCastBackupMessagesToOps;
+
+            // Save on
+            for (ServerWorld world : server.getWorlds()) {
+                if (world != null && world.savingDisabled)
+                    world.savingDisabled = false;
             }
 
             // Send messages to keep everyone informed of the successfulness of the backup
             if (success) {
                 server.getCommandSource().sendFeedback(new TranslatableText("com.sefodopo.autobackup.backedUp"), ops);
                 LogManager.getLogger().info("Server Just Backed up!");
-                if (this.source != null) {
+                if (this.source != null)
                     this.source.sendFeedback(new TranslatableText("com.sefodopo.autobackup.command.now.success"), false);
-                    this.source = null;
-                }
             }
             else {
                 server.getCommandSource().sendFeedback(new TranslatableText("com.sefodopo.autobackup.backupFailed"), ops);
                 LogManager.getLogger().warn("Server failed to back up, check the backup command!");
-                if (this.source != null) {
+                if (this.source != null)
                     this.source.sendFeedback(new TranslatableText("com.sefodopo.autobackup.command.now.failure"), false);
-                    this.source = null;
-                }
             }
         }));
-
     }
 
-    private boolean backupWithoutSave() {
+    private boolean backup() {
         ProcessBuilder builder = new ProcessBuilder();
         if (isWindows) {
             builder.command("cmd.exe", "/c", AutoBackup.getConfig().backupCommand);
@@ -113,7 +107,6 @@ public class Backup {
         }
         builder.environment().put("world", server.getSaveProperties().getLevelName());
         builder.redirectErrorStream(true);
-        boolean success = true;
         try {
             Process p = builder.start();
             p.waitFor();
@@ -125,10 +118,7 @@ public class Backup {
     }
 
     public boolean now(ServerCommandSource source) {
-        unQueBackup();
-        this.source = source;
-        server.send(new ServerTask(20, this::backup));
-        queBackup();
+        new BackupTask(source);
         return true;
     }
 
@@ -148,7 +138,7 @@ public class Backup {
         }
         if (delay != AutoBackup.getConfig().backupInterval) {
             delay = AutoBackup.getConfig().backupInterval;
-            timeLeft = -1;
+            unQueBackup();
         }
         queBackup();
     }
@@ -161,7 +151,9 @@ public class Backup {
                 timeLeft = -1;
             }
             if (AutoBackup.getConfig().backupWhenExit) {
-                backupWithoutSave();
+                LogManager.getLogger().info("Starting Backup before exiting!");
+                boolean success = backup();
+                LogManager.getLogger().info("Backup  " + (success ? "completed successfully" : "failed"));
                 timeLeft = -1;
             }
         }
@@ -182,6 +174,7 @@ public class Backup {
     public void unQueBackup() {
         if (task != null && task.scheduled) {
             task.cancel();
+            this.timeLeft = -1;
         }
     }
 
@@ -208,8 +201,11 @@ public class Backup {
     private class BackupTask extends TimerTask {
         private boolean scheduled = true;
         private long nextExecutionTime;
+        private final ServerCommandSource immediate;
+        private final Object lock = new Object();
 
         private BackupTask() {
+            immediate = null;
             int delay = AutoBackup.getConfig().backupInterval * 60000;
             if (paused && timeLeft > 0) {
                 timer.scheduleAtFixedRate(this, timeLeft, delay);
@@ -224,12 +220,39 @@ public class Backup {
             }
         }
 
+
+        /*
+         * Only call if you want the task to run one time only!
+         * */
+        private BackupTask(ServerCommandSource immediate) {
+            this.immediate = immediate;
+            if (immediate != null) {
+                unQueBackup();
+                source = immediate;
+                task = this;
+                timer.schedule(this, 0);
+            }
+        }
+
         @Override
         public void run() {
             if (scheduled) {
-                backup();
+                preBackup(lock);
+                try {
+                    synchronized (lock) {
+                        lock.wait();
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                postBackup(backup());
             }
-            nextExecutionTime = this.scheduledExecutionTime() + 60000 * AutoBackup.getConfig().backupInterval;
+            nextExecutionTime = this.scheduledExecutionTime() + 60000L * AutoBackup.getConfig().backupInterval;
+            if (immediate != null) {
+                source = null;
+                this.scheduled = false;
+                queBackup();
+            }
         }
 
         @Override

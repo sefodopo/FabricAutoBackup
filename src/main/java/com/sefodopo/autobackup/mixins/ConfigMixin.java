@@ -1,14 +1,13 @@
 package com.sefodopo.autobackup.mixins;
 
 import com.sefodopo.autobackup.AutoBackup;
+import me.sargunvohra.mcmods.autoconfig1u.ConfigData;
+import me.sargunvohra.mcmods.autoconfig1u.ConfigManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import me.shedaniel.autoconfig.ConfigData;
-import me.shedaniel.autoconfig.ConfigManager;
 
 @Mixin(value = ConfigManager.class, remap = false)
 public abstract class ConfigMixin<T extends ConfigData> {

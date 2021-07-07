@@ -2,7 +2,6 @@ package com.sefodopo.autobackup.mixins;
 
 import com.sefodopo.autobackup.AutoBackup;
 import com.sefodopo.autobackup.Backup;
-import me.sargunvohra.mcmods.autoconfig1u.shadowed.blue.endless.jankson.annotation.Nullable;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
@@ -14,6 +13,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import me.shedaniel.cloth.clothconfig.shadowed.blue.endless.jankson.annotation.Nullable;
 
 @Environment(EnvType.CLIENT)
 @Mixin(MinecraftClient.class)
